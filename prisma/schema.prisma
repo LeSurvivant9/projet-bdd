@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AccountType {
+  id    Int    @id @default(autoincrement()) @map("account_type_id")
+  label String @unique
+
+  accounts Account[]
+
+  @@map("account_type")
+}
+
+model Account {
+  email          String   @id
+  hashedPassword String   @map("hashed_password")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+  accountTypeId  Int      @map("account_type_id")
+
+  accountType         AccountType          @relation(fields: [accountTypeId], references: [id])
+  customer            Customer[]
+  verificationTokens  VerificationToken[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("account")
+}
+
+model Model {
+  id        Int      @id @default(autoincrement()) @map("model_id")
+  label     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  tokenCost Int      @map("token_cost")
+
+  @@map("model")
+}
+
+model Customer {
+  id        String   @id @default(cuid()) @map("customer_id")
+  lastName  String   @map("last_name")
+  firstName String   @map("first_name")
+  stripeId  String   @map("stripe_id")
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  account Account @relation(fields: [email], references: [email])
+
+  @@map("customer")
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid()) @map("verification_token_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  email     String
+
+  account Account @relation(fields: [email], references: [email])
+
+  @@map("verification_token")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid()) @map("password_reset_token_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  email     String
+
+  account Account @relation(fields: [email], references: [email])
+
+  @@map("password_reset_token")
+}
